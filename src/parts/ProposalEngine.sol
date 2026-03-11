@@ -187,7 +187,6 @@ contract ProposalEngine is SecurityBase, IProposalEngine {
         }
 
         proposal.proposalState = DataTypes.ProposalState.Queued;
-        proposal.unlocktime = unlockTime;
         emit Events.ProposalQueued(proposalId, unlockTime);
     }
 
