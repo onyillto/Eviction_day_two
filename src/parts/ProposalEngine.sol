@@ -91,7 +91,7 @@ contract ProposalEngine is SecurityBase, IProposalEngine {
             createdAt: block.timestamp,
             nonce: currentNonce,
             // This field was missing, causing the argument count mismatch.
-            unlockTime: 0
+            unlocktime: 0
         });
 
         //increment nonce
@@ -187,7 +187,7 @@ contract ProposalEngine is SecurityBase, IProposalEngine {
         }
 
         proposal.proposalState = DataTypes.ProposalState.Queued;
-        proposal.unlockTime = unlockTime;
+        proposal.unlocktime = unlockTime;
         emit Events.ProposalQueued(proposalId, unlockTime);
     }
 

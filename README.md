@@ -1,66 +1,116 @@
-## Foundry
+# ARES Protocol
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+A treasury system i built from scratch for managing and sending protocol funds safely.
+Everything goes through proposals, signatures, a time delay, then execution.
+No shortcuts.
 
-Foundry consists of:
+---
 
-- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
-- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
-- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
-- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+## How the folders are set up
+```
+src/
+├── helpers/
+│   ├── DataTypes.sol          # all my data shapes
+│   ├── Errors.sol             # all my error messages
+│   └── Events.sol             # all my events
+├── interfaces/
+│   ├── IARESVault.sol         
+│   ├── IProposalEngine.sol    
+│   ├── ISignatureVerifier.sol 
+│   ├── ITimelockQueue.sol     
+│   └── IMerkleDistributor.sol 
+├── parts/
+│   ├── ProposalEngine.sol     # handles proposals
+│   ├── SignatureVerifier.sol  # checks signatures
+│   ├── TimelockQueue.sol      # manages the waiting period
+│   └── MerkleDistributor.sol  # handles reward claims
+└── main/
+    ├── SecurityBase.sol       # security rules every contract follows
+    └── ARESVault.sol          # the main contract everything talks to
 
-## Documentation
+test/
+└── ARESTest.sol               
 
-https://book.getfoundry.sh/
-
-## Usage
-
-### Build
-
-```shell
-$ forge build
+script/
+└── Deploy.s.sol               
 ```
 
-### Test
+---
 
-```shell
-$ forge test
+## What you need
+
+- [Foundry](https://getfoundry.sh)
+- Solidity ^0.8.20
+
+---
+
+## Setting it up
+```bash
+git clone https://github.com/onyillto/Eviction_day_two>
+cd ares-protocol
+forge install
 ```
 
-### Format
+---
 
-```shell
-$ forge fmt
+## Running the tests
+```bash
+# run everything
+forge test
+
+# see more info
+forge test -vvvv
+
+
+---
+
+## How it works
+
+Every treasury action follows this flow and cannot skip steps:
+```
+Propose → Sign → Queue → Wait → Execute
 ```
 
-### Gas Snapshots
+| Module | What it does |
+|---|---|
+| ProposalEngine | creates and tracks proposals |
+| SignatureVerifier | collects signatures and checks they are real |
+| TimelockQueue | makes everything wait before running |
+| MerkleDistributor | lets contributors claim their rewards |
+| ARESVault | the boss, holds the money, talks to all modules |
 
-```shell
-$ forge snapshot
-```
+---
 
-### Anvil
+## Security stuff i built in
 
-```shell
-$ anvil
-```
+- Signatures use EIP-712 so they cant be reused or faked
+- Reentrancy guards on everything that moves money
+- Nothing executes without waiting through the timelock
+- Flash loan attackers cant propose because of voter snapshots
+- One proposal cant drain more than 10% of the treasury
+- Emergency stop if anything goes wrong
+- Claims use a bitmap so nobody claims twice
+- Chain id is baked into signatures so they dont work on other chains
 
-### Deploy
+---
 
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
+## What attacks this stops
 
-### Cast
+| Attack | How i stopped it |
+|---|---|
+| Reentrancy | state updates before any external call |
+| Signature replay | nonces per signer |
+| Double claim | bitmap per epoch |
+| Flash loan attack | voter registration required before proposing |
+| Big treasury drain | capped at 10% per proposal |
+| Early execution | unlock time must pass |
+| Proposal replay | executed flag never gets deleted |
+| Wrong chain signature | chain id locked in domain separator |
+| Unauthorized execution | only specific contracts can change proposal state |
+| Timelock griefing | delay is capped at 30 days max |
 
-```shell
-$ cast <subcommand>
-```
+---
 
-### Help
+## License
 
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+MIT
