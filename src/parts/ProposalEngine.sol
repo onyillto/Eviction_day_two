@@ -42,6 +42,18 @@ contract ProposalEngine is SecurityBase, IProposalEngine {
 
 
     // ========================
+    // GOVERNANCE FUNCTIONS
+    // ========================
+
+    //set addresses of other modules
+    function setDependencies(address _signatureVerifier, address _timelockQueue) external onlyGovernance {
+        if (_signatureVerifier == address(0)) revert Errors.ZeroAddress();
+        if (_timelockQueue == address(0)) revert Errors.ZeroAddress();
+        signatureVerifier = _signatureVerifier;
+        timelockQueue = _timelockQueue;
+    }
+
+    // ========================
     // PROPOSAL FUNCTIONS
     // ========================
 

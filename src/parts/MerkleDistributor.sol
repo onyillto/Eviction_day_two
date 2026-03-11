@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../helpers/DataTypes.sol";
-import "../helpers/Errors.sol";
-import "../helpers/Events.sol";
-import "../interfaces/IMerkleDistributor.sol";
-import "../main/SecurityBase.sol";
+import {Errors} from "../helpers/Errors.sol";
+import {Events} from "../helpers/Events.sol";
+import {IMerkleDistributor} from "../interfaces/IMerkleDistributor.sol";
+import {SecurityBase} from "../main/SecurityBase.sol";
 
 interface IERC20 {
     function transfer(address to, uint256 amount) external returns (bool);
@@ -70,7 +69,14 @@ contract MerkleDistributor is SecurityBase, IMerkleDistributor {
         if (_isClaimed(epoch, index)) revert Errors.AlreadyClaimed(msg.sender, epoch);
 
         //verify the merkle proof
-        bytes32 leaf = keccak256(abi.encodePacked(index, msg.sender, amount));
+        bytes32 leaf;
+        assembly {
+            let m := mload(0x40)
+            mstore(m, index)
+            mstore(add(m, 0x20), shl(96, caller()))
+            mstore(add(m, 0x34), amount)
+            leaf := keccak256(m, 0x54)
+        }
         if (!_verifyProof(proof, _roots[epoch], leaf)) {
             revert Errors.InvalidMerkleProof(msg.sender, epoch);
         }
@@ -160,7 +166,14 @@ contract MerkleDistributor is SecurityBase, IMerkleDistributor {
         bytes32[] calldata proof
     ) external view returns (bool) {
         if (_roots[epoch] == bytes32(0)) return false;
-        bytes32 leaf = keccak256(abi.encodePacked(index, recipient, amount));
+        bytes32 leaf;
+        assembly {
+            let m := mload(0x40)
+            mstore(m, index)
+            mstore(add(m, 0x20), shl(96, recipient))
+            mstore(add(m, 0x34), amount)
+            leaf := keccak256(m, 0x54)
+        }
         return _verifyProof(proof, _roots[epoch], leaf);
     }
 
@@ -189,7 +202,7 @@ contract MerkleDistributor is SecurityBase, IMerkleDistributor {
         uint256 wordIndex = index / 256;
         uint256 bitIndex = index % 256;
         uint256 word = _claimedBitmap[epoch][wordIndex];
-        uint256 mask = 1 << bitIndex;
+        uint256 mask = uint256(1) << bitIndex;
         return word & mask != 0;
     }
 
@@ -201,7 +214,7 @@ contract MerkleDistributor is SecurityBase, IMerkleDistributor {
     ) internal {
         uint256 wordIndex = index / 256;
         uint256 bitIndex = index % 256;
-        _claimedBitmap[epoch][wordIndex] |= 1 << bitIndex;
+        _claimedBitmap[epoch][wordIndex] |= uint256(1) << bitIndex;
     }
 
 

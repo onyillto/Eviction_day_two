@@ -26,6 +26,7 @@ library Errors {
     error SignatureAlreadyUsed(address signer, uint256 nonce);
     error SignatureExpired(uint256 expiredAt, uint256 currentTime);
     error InvalidSigner(address signer);
+    error SignerAlreadyExists(address signer);
     error ThresholdNotMet(uint256 required, uint256 received);
     error InvalidChainId(uint256 expected, uint256 provided);
     error InvalidNonce(address signer, uint256 expected, uint256 provided);

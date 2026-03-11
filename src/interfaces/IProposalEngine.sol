@@ -2,8 +2,6 @@
 pragma solidity ^0.8.20;
 
 import {DataTypes} from "../helpers/DataTypes.sol";
-import {Errors} from "../helpers/Errors.sol";
-import {Events} from "../helpers/Events.sol";
 
 interface IProposalEngine {
 

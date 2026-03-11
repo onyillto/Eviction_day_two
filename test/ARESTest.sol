@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "forge-std/Test.sol";
-import "../src/main/SecurityBase.sol";
-import "../src/parts/ARESVault.sol";
-import "../src/parts/ProposalEngine.sol";
-import "../src/parts/SignatureVerifier.sol";
-import "../src/parts/TimelockQueue.sol";
-import "../src/parts/MerkleDistributor.sol";
-import "../src/helpers/DataTypes.sol";
-import "../src/helpers/Errors.sol";
+import {Test} from "forge-std/Test.sol";
+import {ARESVault} from "../src/parts/ARESVault.sol";
+import {ProposalEngine} from "../src/parts/ProposalEngine.sol";
+import {SignatureVerifier} from "../src/parts/SignatureVerifier.sol";
+import {TimelockQueue} from "../src/parts/TimelockQueue.sol";
+import {MerkleDistributor} from "../src/parts/MerkleDistributor.sol";
+import {DataTypes} from "../src/helpers/DataTypes.sol";
+import {Errors} from "../src/helpers/Errors.sol";
 
 //mock ERC20 token for testing
 contract MockToken {
@@ -157,6 +156,12 @@ contract ARESTest is Test {
             address(merkleDistributor)
         );
 
+        //set dependencies in proposal engine
+        proposalEngine.setDependencies(
+            address(sigVerifier),
+            address(timelockQueue)
+        );
+
         //register proposer as voter
         vault.registerVoter(proposer);
 
@@ -245,7 +250,7 @@ contract ARESTest is Test {
             sigVerifier.getSignerNonce(signer1)
         );
         vm.prank(signer1);
-        vault.submitSignature(proposalId, sig1);
+        sigVerifier.submitSignature(proposalId, sig1);
 
         //sign with signer2 - this reaches threshold
         bytes memory sig2 = _signProposal(
@@ -255,7 +260,7 @@ contract ARESTest is Test {
             sigVerifier.getSignerNonce(signer2)
         );
         vm.prank(signer2);
-        vault.submitSignature(proposalId, sig2);
+        sigVerifier.submitSignature(proposalId, sig2);
     }
 
 
@@ -357,7 +362,7 @@ contract ARESTest is Test {
 
         bytes memory sig1 = _signProposal(proposalId, signer1Key, signer1, 0);
         vm.prank(signer1);
-        vault.submitSignature(proposalId, sig1);
+        sigVerifier.submitSignature(proposalId, sig1);
 
         assertEq(sigVerifier.getSignatureCount(proposalId), 1);
     }
@@ -424,7 +429,7 @@ contract ARESTest is Test {
 
     //test 9 - nonce increases after each proposal
     function test_NonceIncreasesAfterProposal() public {
-        uint256 nonceBefore = proposalEngine.getNonce(proposer);
+        uint256 nonceBefore = proposalEngine.getNonce(address(vault));
 
         vm.prank(proposer);
         vault.propose(
@@ -435,7 +440,7 @@ contract ARESTest is Test {
             ""
         );
 
-        uint256 nonceAfter = proposalEngine.getNonce(proposer);
+        uint256 nonceAfter = proposalEngine.getNonce(address(vault));
         assertEq(nonceAfter, nonceBefore + 1);
     }
 
@@ -479,7 +484,7 @@ contract ARESTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(Errors.InvalidSignature.selector, signer1, proposalId)
         );
-        vault.submitSignature(proposalId, fakeSig);
+        sigVerifier.submitSignature(proposalId, fakeSig);
     }
 
 
@@ -542,14 +547,14 @@ contract ARESTest is Test {
         //sign and submit once
         bytes memory sig = _signProposal(proposalId, signer1Key, signer1, 0);
         vm.prank(signer1);
-        vault.submitSignature(proposalId, sig);
+        sigVerifier.submitSignature(proposalId, sig);
 
         //try to submit same signature again
         vm.prank(signer1);
         vm.expectRevert(
             abi.encodeWithSelector(Errors.SignatureAlreadyUsed.selector, signer1, 0)
         );
-        vault.submitSignature(proposalId, sig);
+        sigVerifier.submitSignature(proposalId, sig);
     }
 
 
@@ -623,7 +628,7 @@ contract ARESTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(Errors.InvalidSigner.selector, attacker)
         );
-        vault.submitSignature(proposalId, attackerSig);
+        sigVerifier.submitSignature(proposalId, attackerSig);
     }
 
 
@@ -650,7 +655,7 @@ contract ARESTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(Errors.InvalidSignature.selector, signer1, proposalId)
         );
-        vault.submitSignature(proposalId, wrongChainSig);
+        sigVerifier.submitSignature(proposalId, wrongChainSig);
     }
 
 }

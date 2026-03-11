@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../helpers/DataTypes.sol";
-import "../helpers/Errors.sol";
-import "../helpers/Events.sol";
-import "../interfaces/ISignatureVerifier.sol";
-import "../interfaces/IProposalEngine.sol";
-import "../main/SecurityBase.sol";
+import {Errors} from "../helpers/Errors.sol";
+import {Events} from "../helpers/Events.sol";
+import {ISignatureVerifier} from "../interfaces/ISignatureVerifier.sol";
+import {IProposalEngine} from "../interfaces/IProposalEngine.sol";
+import {SecurityBase} from "../main/SecurityBase.sol";
 
 contract SignatureVerifier is SecurityBase, ISignatureVerifier {
 
@@ -158,7 +157,7 @@ contract SignatureVerifier is SecurityBase, ISignatureVerifier {
     //add a new authorized signer
     function addSigner(address signer) external onlyGovernance {
         if (signer == address(0)) revert Errors.ZeroAddress();
-        if (_signers[signer]) revert Errors.ProposalAlreadyExists(bytes32(0));
+        if (_signers[signer]) revert Errors.SignerAlreadyExists(signer);
         _signers[signer] = true;
     }
 
@@ -208,24 +207,30 @@ contract SignatureVerifier is SecurityBase, ISignatureVerifier {
     ) internal view returns (bool) {
 
         //build the struct hash
-        bytes32 structHash = keccak256(
-            abi.encode(
-                _APPROVAL_TYPEHASH,
-                proposalId,
-                signer,
-                nonce,
-                block.chainid
-            )
-        );
+        bytes32 structHash;
+        bytes32 typeHash = _APPROVAL_TYPEHASH;
+        uint256 chainId = block.chainid;
+        assembly {
+            let m := mload(0x40)
+            mstore(m, typeHash)
+            mstore(add(m, 0x20), proposalId)
+            mstore(add(m, 0x40), signer)
+            mstore(add(m, 0x60), nonce)
+            mstore(add(m, 0x80), chainId)
+            structHash := keccak256(m, 0xa0)
+        }
 
         //build the final EIP-712 hash
-        bytes32 digest = keccak256(
-            abi.encodePacked(
-                "\x19\x01",
-                _domainSeparator,
-                structHash
-            )
-        );
+        bytes32 digest;
+        bytes32 domainSeparator = _domainSeparator;
+        assembly {
+            let m := mload(0x40)
+            mstore8(m, 0x19)
+            mstore8(add(m, 1), 0x01)
+            mstore(add(m, 2), domainSeparator)
+            mstore(add(m, 34), structHash)
+            digest := keccak256(m, 66)
+        }
 
         //recover the signer from the signature
         address recovered = _recoverSigner(digest, signature);
@@ -248,12 +253,9 @@ contract SignatureVerifier is SecurityBase, ISignatureVerifier {
         bytes32 s;
         uint8 v;
 
-        //extract r s v from signature
-        assembly {
-            r := calldataload(signature.offset)
-            s := calldataload(add(signature.offset, 32))
-            v := byte(0, calldataload(add(signature.offset, 64)))
-        }
+        r = bytes32(signature[:32]);
+        s = bytes32(signature[32:64]);
+        v = uint8(signature[64]);
 
         //prevent signature malleability
         if (uint256(s) > 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0) {

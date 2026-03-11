@@ -60,6 +60,13 @@ contract Deploy is Script {
             address(merkleDistributor)
         );
 
+        //set dependencies in proposal engine
+        vm.prank(governance);
+        proposalEngine.setDependencies(
+            address(sigVerifier),
+            address(timelockQueue)
+        );
+
         vm.stopBroadcast();
 
         //log addresses

@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../helpers/DataTypes.sol";
-import "../helpers/Errors.sol";
-import "../helpers/Events.sol";
-import "../interfaces/IARESVault.sol";
-import "../interfaces/IProposalEngine.sol";
-import "../interfaces/ISignatureVerifier.sol";
-import "../interfaces/ITimelockQueue.sol";
-import "../interfaces/IMerkleDistributor.sol";
-import "../main/SecurityBase.sol";
+import {DataTypes} from "../helpers/DataTypes.sol";
+import {Errors} from "../helpers/Errors.sol";
+import {IARESVault} from "../interfaces/IARESVault.sol";
+import {IProposalEngine} from "../interfaces/IProposalEngine.sol";
+import {ISignatureVerifier} from "../interfaces/ISignatureVerifier.sol";
+import {ITimelockQueue} from "../interfaces/ITimelockQueue.sol";
+import {IMerkleDistributor} from "../interfaces/IMerkleDistributor.sol";
+import {SecurityBase} from "../main/SecurityBase.sol";
 
 interface IERC20Transfer {
     function transfer(address to, uint256 amount) external returns (bool);
@@ -324,7 +323,7 @@ contract ARESVault is SecurityBase, IARESVault {
 
     //handle module upgrades
     function _handleUpgrade(
-        address target,
+        address /* target */,
         bytes memory callData
     ) internal {
         //decode which module to upgrade and new address
