@@ -89,8 +89,9 @@ contract ProposalEngine is SecurityBase, IProposalEngine {
             amount: amount,
             callData: callData,
             createdAt: block.timestamp,
-            unlockTime: 0,
-            nonce: currentNonce
+            nonce: currentNonce,
+            // This field was missing, causing the argument count mismatch.
+            unlockTime: 0
         });
 
         //increment nonce

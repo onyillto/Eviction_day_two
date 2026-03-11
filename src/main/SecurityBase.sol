@@ -78,7 +78,7 @@ abstract contract SecurityBase {
     // ========================
 
     //transfer governance to new address
-    function updateGovernance(address newGovernance) external onlyGovernance {
+    function updateGovernance(address newGovernance) public virtual onlyGovernance {
         if (newGovernance == address(0)) {
             revert Errors.ZeroAddress();
         }
@@ -87,13 +87,13 @@ abstract contract SecurityBase {
     }
 
     //trigger emergency stop
-    function emergencyStop() external onlyGovernance {
+    function emergencyStop() public virtual onlyGovernance {
         stopped = true;
         emit Events.EmergencyStop(msg.sender, block.timestamp);
     }
 
     //resume after emergency stop
-    function resume() external onlyGovernance {
+    function resume() public virtual onlyGovernance {
         stopped = false;
     }
 

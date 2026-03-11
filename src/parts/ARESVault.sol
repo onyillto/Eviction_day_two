@@ -144,11 +144,6 @@ contract ARESVault is SecurityBase, IARESVault {
             revert Errors.ProposalNotQueued(proposalId);
         }
 
-        //check timelock is ready
-        if (!ITimelockQueue(timelockQueue).isReady(proposalId)) {
-            revert Errors.ExecutionTooEarly(proposal.unlockTime, block.timestamp);
-        }
-
         //execute through timelock first
         //this marks proposal as executed in both timelock and engine
         ITimelockQueue(timelockQueue).execute(proposalId);
@@ -230,18 +225,21 @@ contract ARESVault is SecurityBase, IARESVault {
     // EMERGENCY FUNCTIONS
     // ========================
 
-    //emergency stop - freezes all operations
-    function emergencyStop() external onlyGovernance {
-        stopped = true;
-        emit Events.EmergencyStop(msg.sender, block.timestamp);
+    function emergencyStop()
+        public
+        override(SecurityBase, IARESVault)
+        onlyGovernance
+    {
+        super.emergencyStop();
     }
 
-
-    //resume after emergency stop
-    function resume() external onlyGovernance {
-        stopped = false;
+    function resume()
+        public
+        override(SecurityBase, IARESVault)
+        onlyGovernance
+    {
+        super.resume();
     }
-
 
     //check if vault is currently stopped
     function isStopped() external view returns (bool) {
@@ -282,12 +280,12 @@ contract ARESVault is SecurityBase, IARESVault {
         return IERC20Transfer(token).balanceOf(address(this));
     }
 
-
-    //update governance address
-    function updateGovernance(address newGovernance) external onlyGovernance {
-        if (newGovernance == address(0)) revert Errors.ZeroAddress();
-        emit Events.GovernanceUpdated(governance, newGovernance);
-        governance = newGovernance;
+    function updateGovernance(address newGovernance)
+        public
+        override(SecurityBase, IARESVault)
+        onlyGovernance
+    {
+        super.updateGovernance(newGovernance);
     }
 
 

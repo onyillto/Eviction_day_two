@@ -72,7 +72,7 @@ contract TimelockQueue is SecurityBase, ITimelockQueue {
         //store in queue
         _queue[proposalId] = DataTypes.TimeLockEntry({
             proposalId: proposalId,
-            unlockTime: unlockTime,
+            unlocktime: unlockTime,
             executed: false,
             cancelled: false
         });
@@ -100,8 +100,8 @@ contract TimelockQueue is SecurityBase, ITimelockQueue {
         if (entry.cancelled) revert Errors.TimelockCancelled(proposalId);
 
         //check unlock time has passed
-        if (block.timestamp < entry.unlockTime) {
-            revert Errors.ExecutionTooEarly(entry.unlockTime, block.timestamp);
+        if (block.timestamp < entry.unlocktime) {
+            revert Errors.ExecutionTooEarly(entry.unlocktime, block.timestamp);
         }
 
         //mark as executed BEFORE making any external call
@@ -171,7 +171,7 @@ contract TimelockQueue is SecurityBase, ITimelockQueue {
     //get the unlock time of a queued proposal
     function getUnlockTime(bytes32 proposalId) external view returns (uint256) {
         if (_queue[proposalId].proposalId == bytes32(0)) revert Errors.ProposalNotFound(proposalId);
-        return _queue[proposalId].unlockTime;
+        return _queue[proposalId].unlocktime;
     }
 
 
@@ -195,7 +195,7 @@ contract TimelockQueue is SecurityBase, ITimelockQueue {
         return entry.proposalId != bytes32(0) &&
                !entry.executed &&
                !entry.cancelled &&
-               block.timestamp >= entry.unlockTime;
+               block.timestamp >= entry.unlocktime;
     }
 
 }

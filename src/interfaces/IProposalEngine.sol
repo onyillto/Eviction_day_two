@@ -5,7 +5,7 @@ import "../helpers/DataTypes.sol";
 import "../helpers/Errors.sol";
 import "../helpers/Events.sol";
 
-interface InterfaceMachineProposal {
+interface IProposalEngine {
 
     //create a new proposal
     function propose(
