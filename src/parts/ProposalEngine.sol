@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../helpers/DataTypes.sol";
-import "../helpers/Errors.sol";
-import "../helpers/Events.sol";
-import "../interfaces/IProposalEngine.sol";
-import "../main/SecurityBase.sol";
+import {DataTypes} from "../helpers/DataTypes.sol";
+import {Errors} from "../helpers/Errors.sol";
+import {Events} from "../helpers/Events.sol";
+import {IProposalEngine} from "../interfaces/IProposalEngine.sol";
+import {SecurityBase} from "../main/SecurityBase.sol";
 
 contract ProposalEngine is SecurityBase, IProposalEngine {
 
@@ -89,9 +89,8 @@ contract ProposalEngine is SecurityBase, IProposalEngine {
             amount: amount,
             callData: callData,
             createdAt: block.timestamp,
-            nonce: currentNonce,
-            // This field was missing, causing the argument count mismatch.
-            unlocktime: 0
+            executeAfter: 0,
+            nonce: currentNonce
         });
 
         //increment nonce
@@ -187,6 +186,7 @@ contract ProposalEngine is SecurityBase, IProposalEngine {
         }
 
         proposal.proposalState = DataTypes.ProposalState.Queued;
+        proposal.executeAfter = unlockTime;
         emit Events.ProposalQueued(proposalId, unlockTime);
     }
 

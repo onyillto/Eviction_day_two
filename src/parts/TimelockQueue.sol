@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../helpers/DataTypes.sol";
-import "../helpers/Errors.sol";
-import "../helpers/Events.sol";
-import "../interfaces/ITimelockQueue.sol";
-import "../interfaces/IProposalEngine.sol";
-import "../main/SecurityBase.sol";
+import {DataTypes} from "../helpers/DataTypes.sol";
+import {Errors} from "../helpers/Errors.sol";
+import {Events} from "../helpers/Events.sol";
+import {ITimelockQueue} from "../interfaces/ITimelockQueue.sol";
+import {IProposalEngine} from "../interfaces/IProposalEngine.sol";
+import {SecurityBase} from "../main/SecurityBase.sol";
 
 contract TimelockQueue is SecurityBase, ITimelockQueue {
 
@@ -49,10 +49,10 @@ contract TimelockQueue is SecurityBase, ITimelockQueue {
     //queue an approved proposal for execution
     function queue(
         bytes32 proposalId,
-        address target,
-        address token,
-        uint256 amount,
-        bytes calldata callData
+        address /* target */,
+        address /* token */,
+        uint256 /* amount */,
+        bytes calldata /* callData */
     ) external whenNotStopped returns (uint256 unlockTime) {
 
         //check proposal exists and is approved
@@ -72,7 +72,7 @@ contract TimelockQueue is SecurityBase, ITimelockQueue {
         //store in queue
         _queue[proposalId] = DataTypes.TimeLockEntry({
             proposalId: proposalId,
-            unlocktime: unlockTime,
+            executeAfter: unlockTime,
             executed: false,
             cancelled: false
         });
@@ -100,8 +100,8 @@ contract TimelockQueue is SecurityBase, ITimelockQueue {
         if (entry.cancelled) revert Errors.TimelockCancelled(proposalId);
 
         //check unlock time has passed
-        if (block.timestamp < entry.unlocktime) {
-            revert Errors.ExecutionTooEarly(entry.unlocktime, block.timestamp);
+        if (block.timestamp < entry.executeAfter) {
+            revert Errors.ExecutionTooEarly(entry.executeAfter, block.timestamp);
         }
 
         //mark as executed BEFORE making any external call
@@ -171,7 +171,7 @@ contract TimelockQueue is SecurityBase, ITimelockQueue {
     //get the unlock time of a queued proposal
     function getUnlockTime(bytes32 proposalId) external view returns (uint256) {
         if (_queue[proposalId].proposalId == bytes32(0)) revert Errors.ProposalNotFound(proposalId);
-        return _queue[proposalId].unlocktime;
+        return _queue[proposalId].executeAfter;
     }
 
 
@@ -195,7 +195,7 @@ contract TimelockQueue is SecurityBase, ITimelockQueue {
         return entry.proposalId != bytes32(0) &&
                !entry.executed &&
                !entry.cancelled &&
-               block.timestamp >= entry.unlocktime;
+               block.timestamp >= entry.executeAfter;
     }
 
 }

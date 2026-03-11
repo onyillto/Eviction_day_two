@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "../helpers/Errors.sol";
-import "../helpers/Events.sol";
+import {Errors} from "../helpers/Errors.sol";
+import {Events} from "../helpers/Events.sol";
 
 abstract contract SecurityBase {
 
@@ -26,38 +26,57 @@ abstract contract SecurityBase {
 
     //only governance can call
     modifier onlyGovernance() {
+        _onlyGovernance();
+        _;
+    }
+
+    function _onlyGovernance() internal view {
         if (msg.sender != governance) {
             revert Errors.Unauthorized(msg.sender);
         }
-        _;
     }
 
     //block calls when emergency stop is active
     modifier whenNotStopped() {
+        _whenNotStopped();
+        _;
+    }
+
+    function _whenNotStopped() internal view {
         if (stopped) {
             revert Errors.Unauthorized(msg.sender);
         }
-        _;
     }
 
     //reentrancy guard
     modifier nonReentrant() {
+        _nonReentrantBefore();
+        _;
+        _nonReentrantAfter();
+    }
+
+    function _nonReentrantBefore() internal {
         if (_lockStatus == _LOCKED) {
             revert Errors.Reentrancy();
         }
         _lockStatus = _LOCKED;
-        _;
+    }
+
+    function _nonReentrantAfter() internal {
         _lockStatus = _NOT_LOCKED;
     }
 
     //only specific address can call
     modifier onlyAddress(address allowed) {
-        if (msg.sender != allowed) {
-            revert Errors.Unauthorized(msg.sender);
-        }
+        _onlyAddress(allowed);
         _;
     }
 
+    function _onlyAddress(address allowed) internal view {
+        if (msg.sender != allowed) {
+            revert Errors.Unauthorized(msg.sender);
+        }
+    }
 
     // ========================
     // CONSTRUCTOR
