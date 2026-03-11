@@ -552,7 +552,7 @@ contract ARESTest is Test {
         //try to submit same signature again
         vm.prank(signer1);
         vm.expectRevert(
-            abi.encodeWithSelector(Errors.SignatureAlreadyUsed.selector, signer1, 0)
+            abi.encodeWithSelector(Errors.SignatureAlreadyUsed.selector, signer1, 1)
         );
         sigVerifier.submitSignature(proposalId, sig);
     }

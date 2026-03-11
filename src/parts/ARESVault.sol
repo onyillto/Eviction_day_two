@@ -139,6 +139,9 @@ contract ARESVault is SecurityBase, IARESVault {
         DataTypes.Proposal memory proposal = IProposalEngine(proposalEngine).getProposal(proposalId);
 
         //check proposal is queued
+        if (proposal.proposalState == DataTypes.ProposalState.Executed) {
+            revert Errors.ProposalAlreadyExecuted(proposalId);
+        }
         if (proposal.proposalState != DataTypes.ProposalState.Queued) {
             revert Errors.ProposalNotQueued(proposalId);
         }
